@@ -66,5 +66,12 @@ func (a *Application) NewRouter() *http.ServeMux {
 		handler.Handle(w, r)
 	}))
 
+    mux.Handle("GET /user", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        handler := &GetUserHandler{
+            DB: a.Cfg.DB,
+        }
+        handler.Handle(w, r)
+    }))
+
 	return mux
 }

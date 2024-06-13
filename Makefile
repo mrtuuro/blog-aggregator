@@ -8,6 +8,14 @@ run: build
 	@clear
 	@./bin/blog
 
+
+migration-up: 
+	goose -dir ./sql/schema/ postgres postgres://tuuro:@localhost:5432/blogator up
+
+
+migration-down: 
+	goose -dir ./sql/schema/ postgres postgres://tuuro:@localhost:5432/blogator down
+
 test:
 	@go test ./...
 

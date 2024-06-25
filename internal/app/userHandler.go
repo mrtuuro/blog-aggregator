@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/mrtuuro/blog-aggregator/internal/auth"
 	"github.com/mrtuuro/blog-aggregator/internal/database"
 )
 
@@ -15,6 +14,7 @@ type User struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Name      string    `json:"Name"`
+	ApiKey    string    `json:"api_key"`
 }
 
 func databaseUserToUser(dbUser database.User) User {
@@ -23,6 +23,7 @@ func databaseUserToUser(dbUser database.User) User {
 		CreatedAt: dbUser.CreatedAt,
 		UpdatedAt: dbUser.UpdatedAt,
 		Name:      dbUser.Name,
+		ApiKey:    dbUser.ApiKey,
 	}
 }
 
@@ -32,12 +33,13 @@ type PostUserHandler struct {
 
 func (h *PostUserHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Name string `json:"Name"`
+		Name string `json:"name"`
 	}
 
 	var reqBody parameters
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Insufficiant parameters!")
+		return
 	}
 	if reqBody.Name == "" {
 		respondWithError(w, http.StatusBadRequest, "Name can not be empty!")
@@ -52,6 +54,7 @@ func (h *PostUserHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Error creating user onto DB!")
+		return
 	}
 
 	respondWithJSON(w, http.StatusOK, databaseUserToUser(user))
@@ -61,17 +64,6 @@ type GetUserHandler struct {
 	DB *database.Queries
 }
 
-func (h *GetUserHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	apiKey, err := auth.GetAPIKey(r.Header)
-	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, err.Error())
-		return
-	}
-
-	dbUser, err := h.DB.GetUserByAPIKey(r.Context(), apiKey)
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Error retrieving user!")
-		return
-	}
-	respondWithJSON(w, http.StatusOK, databaseUserToUser(dbUser))
+func (h *GetUserHandler) Handle(w http.ResponseWriter, r *http.Request, user database.User) {
+	respondWithJSON(w, http.StatusOK, databaseUserToUser(user))
 }

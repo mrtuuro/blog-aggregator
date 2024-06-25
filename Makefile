@@ -2,7 +2,7 @@
 CONN="postgres://tuuro:@localhost:5432/blogator"
 
 build:
-	@go build -o bin/blog ./main.go
+	@go build -o bin/blog ./
 
 run: build
 	@clear

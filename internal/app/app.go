@@ -59,19 +59,43 @@ func (a *Application) NewRouter() *http.ServeMux {
 		handler.Handle(w, r)
 	}))
 
+	userHandler := &GetUserHandler{
+		DB: a.Cfg.DB,
+	}
+	mux.Handle("GET /user", a.middlewareAuth(userHandler.Handle))
+
 	mux.Handle("POST /users", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		handler := &PostUserHandler{
+
+		postUserHandler := &PostUserHandler{
 			DB: a.Cfg.DB,
 		}
-		handler.Handle(w, r)
+		postUserHandler.Handle(w, r)
 	}))
 
-    mux.Handle("GET /user", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        handler := &GetUserHandler{
-            DB: a.Cfg.DB,
-        }
-        handler.Handle(w, r)
-    }))
+	postFeedHandler := &PostFeedHandler{
+		DB: a.Cfg.DB,
+	}
+	mux.Handle("POST /feed", a.middlewareAuth(postFeedHandler.Handle))
+
+	getFeedsHandler := &GetFeedsHandler{
+		DB: a.Cfg.DB,
+	}
+	mux.Handle("GET /feeds", a.middlewareAuth(getFeedsHandler.Handle))
+
+	feedFollowHandler := &FollowFeedHandler{
+		DB: a.Cfg.DB,
+	}
+	mux.Handle("POST /feed_follows", a.middlewareAuth(feedFollowHandler.Handle))
+
+	getFeedFollowHandler := &GetFollowFeedHandler{
+		DB: a.Cfg.DB,
+	}
+	mux.Handle("GET /feed_follows", a.middlewareAuth(getFeedFollowHandler.Handle))
+
+    deleteFeedFollowHandler := &DeleteFeedFromFollowHandler{
+        DB: a.Cfg.DB,
+    }
+    mux.Handle("DELETE /feed_follows/{id}", a.middlewareAuth(deleteFeedFollowHandler.Handle))
 
 	return mux
 }

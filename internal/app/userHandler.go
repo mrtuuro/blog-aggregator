@@ -67,3 +67,56 @@ type GetUserHandler struct {
 func (h *GetUserHandler) Handle(w http.ResponseWriter, r *http.Request, user database.User) {
 	respondWithJSON(w, http.StatusOK, databaseUserToUser(user))
 }
+
+type Post struct {
+	ID          uuid.UUID `json:"id"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	Title       string    `json:"title"`
+	Description *string   `json:"description"`
+	PublishedAt time.Time `json:"published_at"`
+	Url         string    `json:"url"`
+	FeedId      uuid.UUID `json:"feed_id"`
+}
+
+func databasePostToPost(dbPost database.Post) Post {
+	var description *string
+	if dbPost.Description.Valid {
+		description = &dbPost.Description.String
+	}
+
+	return Post{
+		ID:          dbPost.ID,
+		CreatedAt:   dbPost.CreatedAt,
+		UpdatedAt:   dbPost.UpdatedAt,
+		Title:       dbPost.Title,
+		Description: description,
+		PublishedAt: dbPost.PublishedAt,
+		Url:         dbPost.Url,
+		FeedId:      dbPost.FeedID,
+	}
+}
+
+func databasePostsToPosts(dbPosts []database.Post) []Post {
+	var posts []Post
+	for _, post := range dbPosts {
+		posts = append(posts, databasePostToPost(post))
+	}
+	return posts
+}
+
+type GetPostsForUserHandler struct {
+	DB *database.Queries
+}
+
+func (h *GetPostsForUserHandler) Handle(w http.ResponseWriter, r *http.Request, user database.User) {
+	dbPosts, err := h.DB.GetPostsForUser(r.Context(), database.GetPostsForUserParams{
+		UserID: user.ID,
+		Limit:  10,
+	})
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Could not get posts")
+		return
+	}
+	respondWithJSON(w, http.StatusOK, databasePostsToPosts(dbPosts))
+}

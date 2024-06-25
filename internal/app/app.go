@@ -97,5 +97,10 @@ func (a *Application) NewRouter() *http.ServeMux {
     }
     mux.Handle("DELETE /feed_follows/{id}", a.middlewareAuth(deleteFeedFollowHandler.Handle))
 
+    getPostsForUserHandler := &GetPostsForUserHandler{
+        DB: a.Cfg.DB,
+    }
+    mux.Handle("GET /posts", a.middlewareAuth(getPostsForUserHandler.Handle))
+
 	return mux
 }
